@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comet - Enterprise Intelligence Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #e4e4e7;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .browser-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #0a0a0a;
+        }
+
+        /* Browser Header */
+        .browser-header {
+            background: #18181b;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .tab-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 12px;
+        }
+
+        .tab {
+            background: #27272a;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #a1a1aa;
+        }
+
+        .tab.active {
+            background: #3f3f46;
+            color: #e4e4e7;
+        }
+
+        .new-tab {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #71717a;
+            border-radius: 4px;
+        }
+
+        .new-tab:hover {
+            background: #27272a;
+        }
+
+        .window-controls {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+            color: #71717a;
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            background: #18181b;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #71717a;
+        }
+
+        .nav-btn:hover:not(.disabled) {
+            background: #27272a;
+            color: #e4e4e7;
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .url-field {
+            flex: 1;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .url-text {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #71717a;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .browser-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #71717a;
+        }
+
+        .action-icon:hover {
+            background: #27272a;
+            color: #e4e4e7;
+        }
+
+        .assistant-btn {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+        }
+
+        /* Comet Banner */
+        .comet-banner {
+            background: linear-gradient(135deg, #0e7490, #164e63);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .comet-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #e0f2fe;
+        }
+
+        .set-default-btn {
+            background: #06b6d4;
+            color: #0a0a0a;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .close-banner {
+            cursor: pointer;
+            color: #e0f2fe;
+            padding: 4px;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #111113;
+            border-right: 1px solid #27272a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-logo {
+            padding: 20px;
+            border-bottom: 1px solid #27272a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .perplexity-icon {
+            width: 24px;
+            height: 24px;
+            background: #e4e4e7;
+            mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2L2 7V17L12 22L22 17V7L12 2ZM11 4.84L19 8.5V15.5L11 19.16V4.84ZM5 8.5L11 5.34V12.66L5 15.5V8.5Z'/%3E%3C/svg%3E") no-repeat center;
+            mask-size: contain;
+        }
+
+        .nav-section {
+            padding: 12px 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #a1a1aa;
+            margin-bottom: 2px;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: #18181b;
+            color: #e4e4e7;
+        }
+
+        .nav-item.active {
+            background: #18181b;
+            color: #06b6d4;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .spaces-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 8px;
+            display: none;
+        }
+
+        .spaces-section.active {
+            display: block;
+        }
+
+        .spaces-header {
+            padding: 8px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #52525b;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .space-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #a1a1aa;
+            margin-bottom: 2px;
+            font-size: 13px;
+        }
+
+        .space-item:hover {
+            background: #18181b;
+            color: #e4e4e7;
+        }
+
+        .space-item.active {
+            background: #18181b;
+            color: #06b6d4;
+        }
+
+        .create-space {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            color: #52525b;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-top: 12px;
+            border: 1px dashed #27272a;
+        }
+
+        .create-space:hover {
+            background: #18181b;
+            color: #a1a1aa;
+            border-color: #3f3f46;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #09090b;
+        }
+
+        /* Home Page */
+        .home-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: block;
+        }
+
+        .home-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .home-title {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 12px;
+            color: #e4e4e7;
+        }
+
+        .home-subtitle {
+            color: #71717a;
+            font-size: 14px;
+        }
+
+        /* Search Container */
+        .search-container {
+            max-width: 700px;
+            margin: 0 auto 40px;
+        }
+
+        .search-box {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .search-box:hover {
+            border-color: #3f3f46;
+        }
+
+        .search-box:focus-within {
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+
+        .search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #e4e4e7;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: #52525b;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #52525b;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .search-btn:hover {
+            background: #27272a;
+            color: #a1a1aa;
+        }
+
+        /* Widget Grid */
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .widget {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 120px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .widget:hover {
+            border-color: #3f3f46;
+            transform: translateY(-1px);
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .widget-title {
+            font-size: 12px;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .widget-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #e4e4e7;
+            margin: 8px 0;
+        }
+
+        .widget-subtitle {
+            font-size: 13px;
+            color: #71717a;
+        }
+
+        .widget-trend {
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        .widget-trend.down {
+            color: #ef4444;
+        }
+
+        /* Workspace Content */
+        .workspace-content {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+        }
+
+        .workspace-content.active {
+            display: flex;
+        }
+
+        .workspace-header {
+            padding: 24px 32px;
+            background: linear-gradient(to bottom, #111113, #09090b);
+            border-bottom: 1px solid #27272a;
+        }
+
+        .workspace-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #e4e4e7;
+            margin-bottom: 8px;
+        }
+
+        .workspace-desc {
+            font-size: 14px;
+            color: #71717a;
+        }
+
+        .workspace-tools {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .tool-btn {
+            padding: 8px 16px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            color: #a1a1aa;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-btn:hover {
+            background: #27272a;
+            color: #e4e4e7;
+            border-color: #3f3f46;
+        }
+
+        .tool-btn.primary {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+            border: none;
+        }
+
+        .workspace-main {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .chat-interface {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .chat-messages {
+            margin-bottom: 32px;
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #27272a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #71717a;
+            font-size: 14px;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-role {
+            font-size: 12px;
+            color: #71717a;
+            margin-bottom: 4px;
+        }
+
+        .message-text {
+            color: #e4e4e7;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .suggested-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .action-chip {
+            padding: 6px 12px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #a1a1aa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-chip:hover {
+            background: #27272a;
+            color: #e4e4e7;
+            border-color: #3f3f46;
+        }
+
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #06b6d4;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Integration Cards */
+        .integration-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .integration-card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .integration-card:hover {
+            border-color: #3f3f46;
+            transform: translateY(-1px);
+        }
+
+        .integration-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .integration-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .integration-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e4e4e7;
+        }
+
+        .integration-desc {
+            font-size: 13px;
+            color: #71717a;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .integration-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser-container">
+        <!-- Browser Header -->
+        <div class="browser-header">
+            <div class="tab-bar">
+                <div class="tab active">
+                    <span>Enterprise Intelligence</span>
+                </div>
+                <div class="new-tab">+</div>
+            </div>
+            <div class="window-controls">
+                <span>−</span>
+                <span>□</span>
+                <span>✕</span>
+            </div>
+        </div>
+
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <div class="nav-controls">
+                <div class="nav-btn disabled">←</div>
+                <div class="nav-btn disabled">→</div>
+                <div class="nav-btn">↻</div>
+            </div>
+            <div class="url-field">
+                <span style="color: #71717a; font-size: 16px; margin-right: 4px;">🔒</span>
+                <input type="text" class="url-text" value="comet://enterprise.perplexity.ai" />
+            </div>
+            <div class="browser-actions">
+                <div class="action-icon">⭐</div>
+                <div class="action-icon">🔗</div>
+                <div class="action-icon">⚙️</div>
+                <div class="action-icon">⋮</div>
+                <button class="assistant-btn">
+                    <span>✨</span>
+                    <span>Assistant</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Comet Banner -->
+        <div class="comet-banner" id="cometBanner">
+            <div class="comet-message">
+                <span>🌟</span>
+                <span>Comet works best as your default browser</span>
+            </div>
+            <button class="set-default-btn">Set Comet as default</button>
+            <span class="close-banner" onclick="document.getElementById('cometBanner').style.display='none'">✕</span>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-logo">
+                    <div class="perplexity-icon"></div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-item active" onclick="showPage('home')">
+                        <span class="nav-icon">○</span>
+                        <span>Home</span>
+                    </div>
+                    <div class="nav-item" onclick="showPage('discover')">
+                        <span class="nav-icon">🌐</span>
+                        <span>Discover</span>
+                    </div>
+                    <div class="nav-item" onclick="toggleSpaces()">
+                        <span class="nav-icon">📊</span>
+                        <span>Spaces</span>
+                    </div>
+                </div>
+
+                <div class="spaces-section" id="spacesSection">
+                    <div class="spaces-header">Enterprise Applications</div>
+                    
+                    <div class="space-item" onclick="openWorkspace('engineering')">
+                        <span class="nav-icon">⚙</span>
+                        <span>Engineering & Design</span>
+                    </div>
+                    <div class="space-item" onclick="openWorkspace('manufacturing')">
+                        <span class="nav-icon">🏭</span>
+                        <span>Manufacturing</span>
+                    </div>
+                    <div class="space-item" onclick="openWorkspace('supply')">
+                        <span class="nav-icon">📦</span>
+                        <span>Supply Chain</span>
+                    </div>
+                    <div class="space-item" onclick="openWorkspace('product')">
+                        <span class="nav-icon">🚀</span>
+                        <span>Product Development</span>
+                    </div>
+                    <div class="space-item" onclick="openWorkspace('quality')">
+                        <span class="nav-icon">✓</span>
+                        <span>Quality Assurance</span>
+                    </div>
+                    <div class="space-item" onclick="openWorkspace('sales')">
+                        <span class="nav-icon">💼</span>
+                        <span>Sales & CRM</span>
+                    </div>
+                    <div class="space-item" onclick="openWorkspace('finance')">
+                        <span class="nav-icon">💰</span>
+                        <span>Finance & Analytics</span>
+                    </div>
+                    <div class="space-item" onclick="openWorkspace('hr')">
+                        <span class="nav-icon">👥</span>
+                        <span>Human Resources</span>
+                    </div>
+                    
+                    <div class="create-space">
+                        <span>+</span>
+                        <span>Create New Space</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Home Page -->
+                <div class="home-content" id="homePage">
+                    <div class="home-header">
+                        <h1 class="home-title">Welcome to Enterprise Intelligence</h1>
+                        <p class="home-subtitle">Your unified portal to all enterprise systems</p>
+                    </div>
+
+                    <div class="search-container">
+                        <div class="search-box">
+                            <input type="text" class="search-input" placeholder="Ask anything across all your enterprise systems..." />
+                            <div class="search-actions">
+                                <div class="search-btn" title="Search">🔍</div>
+                                <div class="search-btn" title="Attach files">📎</div>
+                                <div class="search-btn" title="Voice input">🎙</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="widget-grid">
+                        <div class="widget">
+                            <div class="widget-header">
+                                <span class="widget-title">Production Status</span>
+                            </div>
+                            <div class="widget-value">94.3%</div>
+                            <div class="widget-subtitle">Overall Equipment Effectiveness</div>
+                            <div class="widget-trend">↑ 2.1% from last week</div>
+                        </div>
+
+                        <div class="widget">
+                            <div class="widget-header">
+                                <span class="widget-title">Active Projects</span>
+                            </div>
+                            <div class="widget-value">47</div>
+                            <div class="widget-subtitle">Across all departments</div>
+                            <div class="widget-trend">8 critical deadlines this week</div>
+                        </div>
+
+                        <div class="widget">
+                            <div class="widget-header">
+                                <span class="widget-title">Supply Chain</span>
+                            </div>
+                            <div class="widget-value">96.8%</div>
+                            <div class="widget-subtitle">On-time delivery rate</div>
+                            <div class="widget-trend">2 suppliers at risk</div>
+                        </div>
+
+                        <div class="widget">
+                            <div class="widget-header">
+                                <span class="widget-title">Quality Score</span>
+                            </div>
+                            <div class="widget-value">99.2%</div>
+                            <div class="widget-subtitle">Product quality rate</div>
+                            <div class="widget-trend">↑ 0.3% improvement</div>
+                        </div>
+
+                        <div class="widget">
+                            <div class="widget-header">
+                                <span class="widget-title">Revenue Pipeline</span>
+                            </div>
+                            <div class="widget-value">$47.3M</div>
+                            <div class="widget-subtitle">Q1 2025 forecast</div>
+                            <div class="widget-trend">↑ 23% YoY</div>
+                        </div>
+
+                        <div class="widget">
+                            <div class="widget-header">
+                                <span class="widget-title">Team Productivity</span>
+                            </div>
+                            <div class="widget-value">87%</div>
+                            <div class="widget-subtitle">Average utilization</div>
+                            <div class="widget-trend">12 new hires onboarding</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engineering & Design Workspace -->
+                <div class="workspace-content" id="engineering-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Engineering & Design</div>
+                        <div class="workspace-desc">CAD models, simulations, and technical documentation</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> Design Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> Design Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> Design Document
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about design specs, stress analysis, CAD models, or create engineering workflows..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">⚙</div>
+                                        <div class="search-btn">🔧</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">23</div>
+                                    <div class="stat-label">Active Designs</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">7</div>
+                                    <div class="stat-label">Simulations Running</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">147</div>
+                                    <div class="stat-label">CAD Models</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">5</div>
+                                    <div class="stat-label">Reviews Pending</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">Engineering Assistant</div>
+                                        <div class="message-text">
+                                            Hello! I can help you with design reviews, stress analysis, CAD model queries, or create automated workflows for your engineering processes. What would you like to work on today?
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Review latest motor housing design</div>
+                                            <div class="action-chip">Run thermal simulation on PCB layout</div>
+                                            <div class="action-chip">Create design review workflow</div>
+                                            <div class="action-chip">Generate BOM for Project X-200</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manufacturing Workspace -->
+                <div class="workspace-content" id="manufacturing-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Manufacturing Operations</div>
+                        <div class="workspace-desc">Production monitoring, OEE tracking, and predictive maintenance</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> OEE Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> Maintenance Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> Production Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about machine uptime, production efficiency, maintenance schedules..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">🏭</div>
+                                        <div class="search-btn">⚙</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">87.3%</div>
+                                    <div class="stat-label">Current OEE</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">12.8K</div>
+                                    <div class="stat-label">Units Today</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">99.2%</div>
+                                    <div class="stat-label">Quality Rate</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">3</div>
+                                    <div class="stat-label">Alerts</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">Manufacturing Assistant</div>
+                                        <div class="message-text">
+                                            I'm monitoring all production lines in real-time. Line 2-A is showing anomaly patterns - predictive maintenance recommended within 72 hours. How can I help optimize your production today?
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Show Line 2-A diagnostics</div>
+                                            <div class="action-chip">Schedule maintenance window</div>
+                                            <div class="action-chip">View production trends</div>
+                                            <div class="action-chip">Create alert workflow</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supply Chain Workspace -->
+                <div class="workspace-content" id="supply-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Supply Chain Management</div>
+                        <div class="workspace-desc">Supplier network monitoring, inventory optimization, and supply chain risk management</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> Supplier Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> Supply Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> Supply Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about supplier status, inventory levels, delivery schedules, or supply chain risks..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">📦</div>
+                                        <div class="search-btn">⚙</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="integration-grid">
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #FF4757, #FF3838);">SP</div>
+                                        <div class="integration-title">SAP Ariba</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Supplier management, procurement workflows, and contract management with real-time supplier performance tracking.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 247 active suppliers</span>
+                                    </div>
+                                </div>
+
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #3742FA, #2F3542);">OR</div>
+                                        <div class="integration-title">Oracle SCM</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Supply chain planning, demand forecasting, and inventory optimization with predictive analytics.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 1,247 SKUs tracked</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">247</div>
+                                    <div class="stat-label">Active Suppliers</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">96.8%</div>
+                                    <div class="stat-label">On-Time Delivery</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">2</div>
+                                    <div class="stat-label">Suppliers At Risk</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">89%</div>
+                                    <div class="stat-label">Inventory Health</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">Supply Chain Assistant</div>
+                                        <div class="message-text">
+                                            I've detected potential disruption risks: Supplier TechComponents Inc. (15% of semiconductor supply) is experiencing delays due to regional weather. Alternative suppliers Infineon and ST Micro have capacity. Shall I initiate contingency procurement?
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Show supplier risk analysis</div>
+                                            <div class="action-chip">View alternative suppliers</div>
+                                            <div class="action-chip">Initiate contingency orders</div>
+                                            <div class="action-chip">Create supply disruption workflow</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Development Workspace -->
+                <div class="workspace-content" id="product-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Product Development</div>
+                        <div class="workspace-desc">NPI pipeline management, design collaboration, and PLM integration</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> NPI Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> Product Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> Product Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about NPI status, design reviews, PLM data, or create product workflows..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">🚀</div>
+                                        <div class="search-btn">⚙</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="integration-grid">
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #4BCFFA, #14A085);">OS</div>
+                                        <div class="integration-title">PTC Onshape</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Cloud-based CAD platform for collaborative design with real-time version control and design validation workflows.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 47 active models</span>
+                                    </div>
+                                </div>
+
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #0078D4, #005A9F);">TC</div>
+                                        <div class="integration-title">Siemens Teamcenter</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Product lifecycle management with BOM management, change control, and compliance tracking across the entire product lifecycle.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 23 NPI projects</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">23</div>
+                                    <div class="stat-label">Active NPI Projects</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">7</div>
+                                    <div class="stat-label">In Design Phase</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">12</div>
+                                    <div class="stat-label">In Testing Phase</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">4</div>
+                                    <div class="stat-label">Ready for Launch</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">Product Development Assistant</div>
+                                        <div class="message-text">
+                                            Project Phoenix-X200 is 85% complete in Teamcenter. Design validation in Onshape shows thermal performance meets specs. However, Component C-47 is at risk due to supplier qualification delays. Alternative part P/N ALT-C47 is available with 2-week lead time.
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Review Phoenix-X200 status</div>
+                                            <div class="action-chip">Validate alternative component</div>
+                                            <div class="action-chip">Create design change request</div>
+                                            <div class="action-chip">Generate NPI status report</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quality Assurance Workspace -->
+                <div class="workspace-content" id="quality-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Quality Assurance</div>
+                        <div class="workspace-desc">Quality monitoring, field issue tracking, recall management, and compliance oversight</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> Quality Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> Quality Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> Quality Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about quality metrics, field issues, recalls, or create quality workflows..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">✓</div>
+                                        <div class="search-btn">⚙</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="integration-grid">
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #FF6B35, #F7931E);">MQ</div>
+                                        <div class="integration-title">MasterControl QMS</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Quality management system for document control, CAPA management, and regulatory compliance tracking.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 847 quality records</span>
+                                    </div>
+                                </div>
+
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #8E44AD, #9B59B6);">SQ</div>
+                                        <div class="integration-title">Shopfloor QC Systems</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Real-time quality monitoring from production lines with automated defect detection and statistical process control.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 12 production lines</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">99.7%</div>
+                                    <div class="stat-label">First Pass Yield</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">3</div>
+                                    <div class="stat-label">Active Field Issues</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">0</div>
+                                    <div class="stat-label">Active Recalls</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">15</div>
+                                    <div class="stat-label">CAPAs Open</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">Quality Assistant</div>
+                                        <div class="message-text">
+                                            Quality alert: Line 3 showing increased defect rate (2.1% vs 0.8% baseline) in connector assembly. Root cause analysis suggests tooling wear on Station 7. Field issue FI-2025-003 from customer batch B2024-847 requires investigation - 3 units reported intermittent connection failure.
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Investigate Line 3 defects</div>
+                                            <div class="action-chip">Schedule tooling maintenance</div>
+                                            <div class="action-chip">Review field issue FI-2025-003</div>
+                                            <div class="action-chip">Create quality investigation workflow</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales & CRM Workspace -->
+                <div class="workspace-content" id="sales-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Sales & CRM</div>
+                        <div class="workspace-desc">Unified customer relationship management across Salesforce, ServiceNow, and other platforms</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> Pipeline Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> Sales Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> Sales Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about leads, opportunities, customer data, or create sales workflows..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">💼</div>
+                                        <div class="search-btn">⚙</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="integration-grid">
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #1589F0, #0B80EA);">SF</div>
+                                        <div class="integration-title">Salesforce</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Access leads, opportunities, accounts, and custom objects. Automated pipeline management and forecasting.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 247 active records</span>
+                                    </div>
+                                </div>
+
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #81B441, #62A834);">SN</div>
+                                        <div class="integration-title">ServiceNow</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Customer service tickets, incident management, and support workflows integrated with sales pipeline.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 52 open tickets</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">$2.4M</div>
+                                    <div class="stat-label">Pipeline Value</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">156</div>
+                                    <div class="stat-label">Active Leads</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">23</div>
+                                    <div class="stat-label">Closing This Week</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">94%</div>
+                                    <div class="stat-label">Customer Satisfaction</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">Sales Assistant</div>
+                                        <div class="message-text">
+                                            I've analyzed your Salesforce pipeline and ServiceNow tickets. There are 3 high-value opportunities at risk due to unresolved support issues. I can help you prioritize these and create automated workflows to prevent future escalations.
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Show at-risk opportunities</div>
+                                            <div class="action-chip">Analyze support ticket trends</div>
+                                            <div class="action-chip">Create escalation workflow</div>
+                                            <div class="action-chip">Generate weekly sales report</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finance & Analytics Workspace -->
+                <div class="workspace-content" id="finance-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Finance & Analytics</div>
+                        <div class="workspace-desc">Financial reporting, budgeting, forecasting, and business intelligence across all systems</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> Financial Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> Finance Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> Financial Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about budgets, forecasts, P&L, cash flow, or create financial analytics..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">💰</div>
+                                        <div class="search-btn">⚙</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="integration-grid">
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #FF6600, #E55A00);">QBO</div>
+                                        <div class="integration-title">QuickBooks Online</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        General ledger, accounts payable/receivable, and real-time financial reporting with automated reconciliation.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • Last sync: 2 min ago</span>
+                                    </div>
+                                </div>
+
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #0078D4, #106EBE);">TB</div>
+                                        <div class="integration-title">Power BI</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Advanced analytics, custom dashboards, and automated financial reporting with real-time KPI monitoring.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 47 active reports</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">$847K</div>
+                                    <div class="stat-label">Monthly Revenue</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">18.2%</div>
+                                    <div class="stat-label">Profit Margin</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">$2.1M</div>
+                                    <div class="stat-label">Cash Flow</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">94%</div>
+                                    <div class="stat-label">Budget Adherence</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">Finance Assistant</div>
+                                        <div class="message-text">
+                                            I've detected a 12% variance from budget in the R&D department. The deviation is primarily from increased cloud infrastructure costs. I can help you analyze the impact and create automated budget alerts for future monitoring.
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Show budget variance analysis</div>
+                                            <div class="action-chip">Forecast Q2 expenses</div>
+                                            <div class="action-chip">Create budget alert workflow</div>
+                                            <div class="action-chip">Generate monthly financial summary</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Human Resources Workspace -->
+                <div class="workspace-content" id="hr-workspace">
+                    <div class="workspace-header">
+                        <div class="workspace-title">Human Resources</div>
+                        <div class="workspace-desc">Employee lifecycle management, performance tracking, and HR analytics</div>
+                        <div class="workspace-tools">
+                            <button class="tool-btn primary">
+                                <span>⚡</span> New Workflow
+                            </button>
+                            <button class="tool-btn">
+                                <span>📊</span> HR Dashboard
+                            </button>
+                            <button class="tool-btn">
+                                <span>🤖</span> HR Agent
+                            </button>
+                            <button class="tool-btn">
+                                <span>📄</span> HR Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-main">
+                        <div class="chat-interface">
+                            <div class="search-container">
+                                <div class="search-box">
+                                    <input type="text" class="search-input" placeholder="Ask about employees, performance reviews, recruiting, or create HR workflows..." />
+                                    <div class="search-actions">
+                                        <div class="search-btn">🔍</div>
+                                        <div class="search-btn">👥</div>
+                                        <div class="search-btn">⚙</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="integration-grid">
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #6C5CE7, #5F4FCF);">WD</div>
+                                        <div class="integration-title">Workday</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Employee data, payroll, benefits administration, and performance management with automated workflows.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 847 employee records</span>
+                                    </div>
+                                </div>
+
+                                <div class="integration-card">
+                                    <div class="integration-header">
+                                        <div class="integration-icon" style="background: linear-gradient(135deg, #00C9A7, #00B894);">GH</div>
+                                        <div class="integration-title">Greenhouse</div>
+                                    </div>
+                                    <div class="integration-desc">
+                                        Recruiting pipeline, candidate tracking, and interview scheduling with automated candidate communications.
+                                    </div>
+                                    <div class="integration-status">
+                                        <div class="status-dot"></div>
+                                        <span>Connected • 23 open positions</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quick-stats">
+                                <div class="stat-card">
+                                    <div class="stat-value">847</div>
+                                    <div class="stat-label">Total Employees</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">8.2%</div>
+                                    <div class="stat-label">Turnover Rate</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">23</div>
+                                    <div class="stat-label">Open Positions</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">89%</div>
+                                    <div class="stat-label">Employee Satisfaction</div>
+                                </div>
+                            </div>
+
+                            <div class="chat-messages">
+                                <div class="message">
+                                    <div class="message-avatar">AI</div>
+                                    <div class="message-content">
+                                        <div class="message-role">HR Assistant</div>
+                                        <div class="message-text">
+                                            I've identified 15 employees due for performance reviews this month and 8 candidates in final interview stages. The Engineering team has the highest satisfaction score (94%) while Customer Support could benefit from additional training resources.
+                                        </div>
+                                        <div class="suggested-actions">
+                                            <div class="action-chip">Schedule pending reviews</div>
+                                            <div class="action-chip">Show candidate pipeline</div>
+                                            <div class="action-chip">Analyze team satisfaction</div>
+                                            <div class="action-chip">Create onboarding workflow</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize page state on load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure only home page is visible on load
+            document.querySelectorAll('.workspace-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Ensure home page is active
+            const homePage = document.getElementById('homePage');
+            if (homePage) {
+                homePage.style.display = 'block';
+            }
+            
+            // Ensure spaces section is hidden on load
+            const spacesSection = document.getElementById('spacesSection');
+            if (spacesSection) {
+                spacesSection.classList.remove('active');
+            }
+        });
+
+        function showPage(page) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+
+            // Hide ALL content including workspaces
+            document.querySelectorAll('.workspace-content').forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none';
+            });
+
+            // Hide spaces section
+            document.getElementById('spacesSection').classList.remove('active');
+
+            // Show selected page
+            if (page === 'home') {
+                document.getElementById('homePage').style.display = 'block';
+            } else if (page === 'discover') {
+                alert('Discover page - Browse trending workflows and best practices');
+            }
+        }
+
+        function toggleSpaces() {
+            const spacesSection = document.getElementById('spacesSection');
+            
+            // Hide all content first
+            document.querySelectorAll('.workspace-content').forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none';
+            });
+            
+            // Hide home page
+            document.getElementById('homePage').style.display = 'none';
+            
+            // Toggle spaces section
+            spacesSection.classList.toggle('active');
+            
+            // Update nav item active state
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (spacesSection.classList.contains('active')) {
+                document.querySelector('.nav-item:nth-child(3)').classList.add('active');
+            }
+        }
+
+        function openWorkspace(workspace) {
+            // Hide ALL content
+            document.querySelectorAll('.workspace-content').forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none';
+            });
+            
+            // Hide home page
+            document.getElementById('homePage').style.display = 'none';
+
+            // Show selected workspace
+            const workspaceElement = document.getElementById(workspace + '-workspace');
+            if (workspaceElement) {
+                workspaceElement.classList.add('active');
+                workspaceElement.style.display = 'flex';
+            } else {
+                // For workspaces not fully implemented, show a placeholder
+                alert(`Opening ${workspace} workspace - Full implementation coming soon!`);
+                return;
+            }
+
+            // Update space item active state
+            document.querySelectorAll('.space-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.space-item').classList.add('active');
+        }
+
+        // Simulate real-time updates
+        setInterval(() => {
+            // Update random widget values
+            const widgets = document.querySelectorAll('.widget-value');
+            if (widgets.length > 0) {
+                const randomWidget = widgets[Math.floor(Math.random() * widgets.length)];
+                const currentValue = parseFloat(randomWidget.textContent) || 0;
+                const change = (Math.random() - 0.5) * 2;
+                if (!randomWidget.textContent.includes('$')) {
+                    const newValue = Math.max(0, currentValue + change);
+                    randomWidget.textContent = newValue.toFixed(1) + '%';
+                }
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
